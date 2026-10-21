@@ -1,0 +1,131 @@
+---
+title: "Project"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+data <- read.csv(file.choose())
+
+print("Data preview:")
+head(data)
+
+print("Column names:")
+colnames(data)
+
+prep_data <- data %>%
+  group_by(test.preparation.course) %>%
+  summarise(
+    Math = mean(`math.score`, na.rm = TRUE),
+    Reading = mean(`reading.score`, na.rm = TRUE),
+    Writing = mean(`writing.score`, na.rm = TRUE),
+    n_students = n(),
+    .groups = "drop"
+  )
+
+prep_long <- prep_data %>%
+  pivot_longer(
+    cols = c(Math, Reading, Writing),
+    names_to = "Subject",
+    values_to = "Score"
+  )
+
+p <- ggplot(
+  prep_long,
+  aes(
+    x = Subject,
+    y = Score,
+    fill = test.preparation.course
+  )
+) +
+  geom_bar(
+    stat = "identity",
+    position = position_dodge(0.8),
+    width = 0.7,
+    alpha = 0.85
+  ) +
+  geom_text(
+    aes(label = round(Score, 1)),
+    position = position_dodge(0.8),
+    vjust = -0.25,
+    size = 4,
+    fontface = "bold",
+    color = "white"
+  ) +
+  scale_fill_brewer(
+    type = "qual",
+    palette = "Set2",
+    name = "Test Prep"
+  ) +
+  labs(
+    title = "Average Scores by Test Preparation Course",
+    subtitle = "Math • Reading • Writing | Impact of Preparation",
+    x = "Subject",
+    y = "Average Score",
+    caption = "Data: Student Performance Dataset"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold",
+      size = 16
+    ),
+    plot.subtitle = element_text(
+      hjust = 0.5,
+      size = 12,
+      color = "gray50"
+    ),
+    plot.caption = element_text(
+      hjust = 1,
+      size = 10,
+      color = "gray40"
+    ),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  ) +
+  coord_cartesian(
+    ylim = c(0, max(prep_long$Score) * 1.1)
+  )
+
+print(p)
+
+ggsave(
+  "test_prep_scores.png",
+  p,
+  width = 10,
+  height = 7,
+  dpi = 300
+)
+
+print("Plot saved as 'test_prep_scores.png'")
+
+print("Summary Table:")
+print(prep_data)
+```
